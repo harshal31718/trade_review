@@ -109,3 +109,32 @@ def test_config_override_changes_outcome():
     fills = fills_df(*revenge_day(9, 3))
     assert any(h.name == "revenge_reentry" for h in analyse(fills).habits)
     assert not any(h.name == "revenge_reentry" for h in analyse(fills, {"W": 1}).habits)
+
+
+# Hard negatives (SPEC s11) -------------------------------------------------------
+def test_profitable_expiry_day_cheap_trades_are_flagged_but_not_reported():
+    rows = []
+    for i in range(4):
+        day = f"2026-11-04"
+        rows += [fill(f"{10 + i}:00", "BUY", 75, 12, day=day), fill(f"{10 + i}:30", "SELL", 75, 40, day=day)]
+    review = analyse(fills_df(*rows))
+    assert review.habits == ()
+    assert review.no_habit_message == NO_HABIT_MESSAGE
+
+
+def test_consistently_large_size_is_not_oversizing():
+    rows = []
+    for i in range(15):
+        day = f"2026-10-{1 + i:02d}"
+        rows += [fill("10:00", "BUY", 750, 100, day=day), fill("10:30", "SELL", 750, 99 if i % 2 else 102, day=day)]
+    review = analyse(fills_df(*rows))
+    assert "oversizing" not in [h.name for h in review.habits]
+
+
+def test_reentry_beyond_window_is_not_revenge():
+    rows = []
+    for i in range(4):
+        h = 9 + i * 2
+        rows += [fill(f"{h}:00", "BUY", 75, 100), fill(f"{h}:10", "SELL", 75, 90),
+                 fill(f"{h}:50", "BUY", 150, 100), fill(f"{h}:59", "SELL", 150, 90)]
+    assert "revenge_reentry" not in [h.name for h in analyse(fills_df(*rows)).habits]
