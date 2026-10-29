@@ -76,3 +76,29 @@ SPEC ambiguities for BRAIN:
 3. Partly-empty fees column = 0 for missing fills: ACCEPTED.
 4. Commit docs/ edits made by BRAIN as-is (SPEC, PROMPTS, FIXTURES, HANDOFF) at your next commit. Never edit them.
 Next: detectors D1-D5, ranking, output object, nudge templates + lint (SPEC s7-s9), tests for F4, F6, F7, F8.
+
+## 2026-10-29 — OPS: multi-leg change, detectors, ranking, nudges done
+Passed: 119 pytest cases, all green. One commit per step, pushed to origin main.
+- Multi-leg same-role rule applied (a close then an open on another strike within 60 s is a roll, not tagged). F9b added. Fill role = whether the fill reduces the running position on its instrument (a flip counts as close). Open/unmatched warning wording updated per BRAIN. BRAIN's docs/ edits committed as-is.
+- engine/detectors.py: D1, D2, D3, D5 always; D4 only if the file has a fees column. One CONFIG dict (W, R, P, OTM_PCT, K, N, MIN_PRIOR, H, MIN_WINNERS, FEE_RATIO, MIN_FLAGGED). Each result has flagged ids, n_flagged, n_total, observed_pnl, baseline_pnl_per_trip, flagged_avg_pnl, evidence, method, notes, status.
+- engine/review.py: `analyse(fills, config=None) -> Review` (whole pipeline), `rank_results`, `is_reportable`. Reported only if n_flagged >= 3 AND observed_pnl < 0; sorted by |observed_pnl|, ties by name; max 3; zero -> `no_habit_message = "No costly habit found this period."`. Review carries period, trips, net pnl + gross/net label, win rate, warnings.
+- engine/nudges.py: one fixed template per detector + descriptions; lint tests enforce SPEC s9 banned tokens, tone words, underlyings, and "estimate" on every counterfactual. The lint caught "as long as" in the D5 template; reworded.
+- Tests: F4, F4b, F4c, F6, F6b, F6c, F7 (12 prior, 5 prior), F8 with the exact FIXTURES values, plus clean trader -> no habit, n_flagged < 3 never reported, hard negatives. No fixture expected value changed; no fixture looks wrong.
+- Trips now carry `entry_spot` (spot of the first opening fill) so D2 can use moneyness.
+
+Assumptions:
+- D1: prior = the MOST RECENT losing trip (same underlying, any strike) whose exit is at or before T's entry and within W min; flagged if size(T) >= R x size(prior). Not "any" losing trip in the window.
+- D2: long trips only; entry date (IST) == expiry. Spot method (>= 1% OTM: CE strike above spot, PE below) only if every expiry-day long entry has spot; otherwise price proxy for all, with a note.
+- D3: previous N trips are by entry time across all instruments. For a trip with fewer than 10 prior trips the median of ALL eligible trips in the period (including itself) is used; a note says how many trips used it.
+- D5: winners = pnl > 0, losers = pnl < 0, strict ">" against H x median winner hold. Skipped with a note if < 3 winners.
+- D4: SPEC gives no flagging threshold, and without one any trader with fees would be "flagged". I added CONFIG FEE_RATIO = 0.2 (fees / sum of |gross pnl| per trip >= 20%). Flagged = trips with fees > 0; observed_pnl = -total fees (exact, no estimate). Please confirm or give a number.
+- D4 and D5 carry no "if avoided (estimate)" figure (D4 exact cost, D5 no price path, per SPEC s7). Their rupee figure is still shown as observed INR. D1-D3 show estimate = |observed_pnl|.
+- Multi-leg trips are excluded from every detector, including as "prior" trips for D1 and D3 history.
+- Header (period, trips, net pnl, win rate) uses all trips including multi-leg; the exclusion count is in warnings.
+
+SPEC ambiguities for BRAIN:
+1. s7 D4 "gross profit-and-loss turnover" is undefined; I used the sum of |gross pnl per trip|. No threshold given (see above).
+2. s7 D1 "a LOSING trip exit": most recent loser vs any loser in the window. I chose most recent (more conservative).
+3. s8 asks for an "estimate INR" per habit but s7 D5 says no counterfactual. I show none for D5 and D4.
+4. s7 D3 "fewer than 10 prior trips: whole-period median" — I include the trip itself in that median.
+5. Not built yet: the app, synthetic generator, eval script, keep-warm job.
