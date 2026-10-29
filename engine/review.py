@@ -13,6 +13,7 @@ from engine.detectors import (
     CONFIG, EXPIRY_CHEAP, FEE_DRAG, LOSER_HOLDING, DetectorResult, run_detectors,
 )
 from engine.multileg import flag_trips, tag_multileg
+from engine.nudges import DESCRIPTIONS, render_nudge
 from engine.pairing import pair_trips
 
 MAX_HABITS = 3
@@ -75,11 +76,12 @@ def _habit(result: DetectorResult, config: dict) -> Habit:
     worst = result.evidence.sort_values("pnl", kind="stable").head(MAX_EVIDENCE_ROWS)
     estimate = None if result.name in NO_ESTIMATE else abs(result.observed_pnl)
     return Habit(
-        name=result.name, description=result.name.replace("_", " "),
+        name=result.name, description=DESCRIPTIONS[result.name],
         n_flagged=result.n_flagged, n_total=result.n_total,
         observed_pnl=result.observed_pnl, estimate_pnl=estimate,
         flagged_avg_pnl=result.flagged_avg_pnl, unflagged_avg_pnl=result.baseline_pnl_per_trip,
         evidence=worst.reset_index(drop=True), method=result.method, notes=result.notes,
+        nudge=render_nudge(result, config, estimate),
     )
 
 
