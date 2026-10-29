@@ -15,8 +15,31 @@ class MultiLegResult:
     warnings: list[str] = field(default_factory=list)
 
 
-def _is_leg_pair(a, b) -> bool:
-    """Two near-simultaneous fills on one underlying+expiry that look like legs of one strategy."""
+def _roles(fills: pd.DataFrame) -> dict[int, str]:
+    """fill_id -> "open" or "close", from the running position per instrument.
+
+    A fill that reduces the position (including one that flips it) is a close.
+    """
+    roles: dict[int, str] = {}
+    ordered = fills.sort_values(["ts", "fill_id"], kind="stable")
+    for _, grp in ordered.groupby(["underlying", "expiry", "strike", "option_type"], sort=False):
+        position = 0
+        for row in grp.itertuples(index=False):
+            signed = row.qty if row.side == "BUY" else -row.qty
+            reduces = position != 0 and (position > 0) != (signed > 0)
+            roles[row.fill_id] = "close" if reduces else "open"
+            position += signed
+    return roles
+
+
+def _is_leg_pair(a, b, roles: dict[int, str]) -> bool:
+    """Two near-simultaneous fills on one underlying+expiry that look like legs of one strategy.
+
+    Both must have the same role (both opening or both closing). A close on one
+    strike followed by an open on another is a roll, not a multi-leg.
+    """
+    if roles[a.fill_id] != roles[b.fill_id]:
+        return False
     if a.option_type != b.option_type:
         return True
     return a.side != b.side and a.strike != b.strike
@@ -32,13 +55,14 @@ def _find(parent: dict[int, int], x: int) -> int:
 def _group_ids(fills: pd.DataFrame) -> dict[int, int]:
     """Map fill_id -> group root for every fill that is part of a multi-leg cluster."""
     parent: dict[int, int] = {}
+    roles = _roles(fills)
     for _, grp in fills.groupby(["underlying", "expiry"], sort=False):
         rows = list(grp.sort_values(["ts", "fill_id"], kind="stable").itertuples(index=False))
         for i, a in enumerate(rows):
             for b in rows[i + 1:]:
                 if (b.ts - a.ts).total_seconds() > WINDOW_SECONDS:
                     break
-                if not _is_leg_pair(a, b):
+                if not _is_leg_pair(a, b, roles):
                     continue
                 for fid in (a.fill_id, b.fill_id):
                     parent.setdefault(fid, fid)

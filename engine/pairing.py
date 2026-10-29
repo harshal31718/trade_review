@@ -119,7 +119,10 @@ def _open_record(key: tuple, trip: _Trip, lots: deque[_Lot]) -> dict:
 def _open_warning(opens: pd.DataFrame) -> list[str]:
     if opens.empty:
         return []
-    head = f"{len(opens)} open/unmatched position(s) not counted as trips"
+    head = (
+        f"{len(opens)} open/unmatched position(s) (may be a position opened before this period), "
+        "not counted as trips"
+    )
     details = [
         f"{r.underlying} {r.strike:g} {r.option_type} exp {r.expiry} "
         f"({r.direction}, {r.qty} @ {r.avg_price:.2f})"

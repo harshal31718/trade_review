@@ -103,3 +103,26 @@ def test_tagging_does_not_mutate_input():
     )
     tag_multileg(fills)
     assert "possible_multi_leg" not in fills.columns
+
+
+# F9b (BRAIN, HANDOFF 2026-10-29): a roll is not a multi-leg ----------------
+def test_f9b_close_on_one_strike_then_open_on_another_is_a_roll():
+    fills = fills_df(
+        fill("09:30:00", "BUY", 75, 100, strike=24500),
+        fill("10:00:00", "SELL", 75, 120, strike=24500),   # close
+        fill("10:00:20", "BUY", 75, 90, strike=24800),     # open on another strike
+    )
+    result = tag_multileg(fills)
+    assert not result.fills["possible_multi_leg"].any()
+    assert result.n_groups == 0 and result.warnings == []
+
+
+def test_two_closes_within_60s_on_different_strikes_are_still_multi_leg():
+    fills = fills_df(
+        fill("09:00:00", "BUY", 75, 100, strike=24500),
+        fill("09:00:30", "SELL", 75, 40, strike=24800),
+        fill("10:00:00", "SELL", 75, 120, strike=24500),
+        fill("10:00:20", "BUY", 75, 30, strike=24800),
+    )
+    tagged = tag_multileg(fills).fills
+    assert tagged["possible_multi_leg"].all()

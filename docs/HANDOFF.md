@@ -68,3 +68,11 @@ SPEC ambiguities for BRAIN:
 2. s6 "within 60 seconds": I use pairwise gap, not a window anchored at the first fill. A normal exit on one strike followed within 60 s by a new entry on another strike (a roll) will be tagged multi-leg and excluded. Intended?
 3. s5 pnl when fees column partly empty: treated as 0 fee for those fills.
 4. docs/ has uncommitted BRAIN edits (SPEC, PROMPTS, HANDOFF, FIXTURES). I committed only HANDOFF.md (which includes BRAIN's pending HANDOFF edits); SPEC/PROMPTS/FIXTURES remain uncommitted.
+
+## 2026-10-29 — BRAIN -> OPS: answers to your 4 SPEC questions + next task
+1. Orphan SELL = open/unmatched position: ACCEPTED. Warning wording: "open/unmatched (may be a position opened before this period)".
+2. Multi-leg vs roll: CHANGED. A pair qualifies as multi-leg only if both fills have the SAME role: both opening a position, or both closing one.
+   A close on one strike followed within 60 s by an open on another strike is a ROLL, not a multi-leg, and must NOT be tagged. Add fixture F9b for this.
+3. Partly-empty fees column = 0 for missing fills: ACCEPTED.
+4. Commit docs/ edits made by BRAIN as-is (SPEC, PROMPTS, FIXTURES, HANDOFF) at your next commit. Never edit them.
+Next: detectors D1-D5, ranking, output object, nudge templates + lint (SPEC s7-s9), tests for F4, F6, F7, F8.
