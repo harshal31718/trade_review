@@ -31,3 +31,40 @@
 - Note: first pip install hung with no network progress; killed and re-ran, succeeded.
 - Committed and pushed to origin main.
 - Waiting on: SPEC.md input schema + detector contracts before any engine work.
+
+## 2026-10-29 — BRAIN -> OPS: SPEC v0.2 (Nubra reference guide received)
+- Read SPEC.md section 12. D5 loser_holding is now core. Every habit needs a rupee figure. One-screen layout, max 3 habits.
+- Add disclaimer text in app: "For demo purposes only. Not investment advice."
+- Eval output must be a table: # | Type | Input | Expected | Actual | Pass/Fail | Fix. Include >=3 hand-calculated fixtures (I will supply expected values).
+- Real-data (Groww) path is now OPTIONAL. Do not spend build time on the groww mapper until engine + app + deploy are done.
+
+## 2026-10-29 — BRAIN -> OPS: keep-warm job (do AFTER app deploys, low priority)
+- Streamlit Cloud sleeps apps after ~12h without visitors; commits do not count and cannot wake a sleeping app.
+- Add .github/workflows/keepwarm.yml: cron every 6 hours + workflow_dispatch. Job uses Playwright (headless Chromium) to open the app URL,
+  wait for the page to render, and if the text "get this app back up" is present, click that button and wait for the app to load.
+  Fail the job if the app title is not found after wake. URL stored as a repo variable, not hard-coded. Public repo = free Actions minutes.
+- Keep the script in tests/ or a tools/ folder, not engine/. Do not add any in-app threads or timers: they do not prevent sleep.
+
+## 2026-10-29 — OPS: engine steps 1-4 done (schema, mappers, pairing, multi-leg)
+Passed: 51 pytest cases, all green (`.venv\Scripts\python -m pytest`). One commit per step, pushed to origin main.
+- engine/schema.py `validate_trades(df)`: F10 covered (empty/header-only -> "file is empty"; missing column -> error names it; unparseable value -> names column + first bad rows).
+- engine/mappers/: registry with `canonical` only. `get_mapper(name)`, `map_to_canonical(df, mapper="canonical")`. No groww.
+- engine/pairing.py `pair_trips(fills)`: F1, F2, F3, F5 exact values; F4 and F6 pairing parts (2 trips; pnl -900). Returns trips, open_positions, warnings.
+- engine/multileg.py `tag_multileg`, `flag_trips`: F9 (1 group, both fills tagged).
+- tests/: test_schema, test_mappers, test_pairing, test_multileg, test_pipeline. No fixture expected value was changed; no fixture appears wrong.
+- NOT yet tested (need detectors, next step): F4 D1 flags and variants F4b/F4c, F6 D2 flags and F6b/F6c, F7 (D3), F8 (D5).
+
+Assumptions:
+- Timestamps: naive -> treated as IST; tz-aware -> converted to IST (fixed +05:30, no tzdata dependency).
+- Schema adds `fill_id` (row order after stable time sort); validate returns warnings in `df.attrs["warnings"]` (dropped non-option rows; "no fees column, gross pnl").
+- Non-CE/PE rows are dropped and counted; if none remain, error. Column names are lower-cased/stripped; side and option_type upper-cased.
+- qty must be a positive whole number; price >= 0 (0 allowed for expired-worthless, F6). Missing fee values in a fees column are treated as 0.
+- Multi-leg: a pair of fills (same underlying+expiry, <= 60 s apart, inclusive) qualifies if option types differ, or sides differ AND strikes differ. Groups are connected components of qualifying pairs; trips containing any tagged fill get `possible_multi_leg=True`.
+- A position flip (SELL larger than open long) closes the trip and opens a new short trip with the remainder; fees are split pro rata by qty.
+- Trips with a scale-in after a partial exit stay ONE trip (flat to flat); qty/size/entry_price use all opening fills.
+
+SPEC ambiguities for BRAIN:
+1. SPEC s5 says "closing fills with no opener in the file are NOT trips" but also "sell-first opens a short". An orphan SELL is indistinguishable from a short opener, so it is reported as an open/unmatched position (warning says "open/unmatched"). Confirm this is acceptable, or say how to tell them apart.
+2. s6 "within 60 seconds": I use pairwise gap, not a window anchored at the first fill. A normal exit on one strike followed within 60 s by a new entry on another strike (a roll) will be tagged multi-leg and excluded. Intended?
+3. s5 pnl when fees column partly empty: treated as 0 fee for those fills.
+4. docs/ has uncommitted BRAIN edits (SPEC, PROMPTS, HANDOFF, FIXTURES). I committed only HANDOFF.md (which includes BRAIN's pending HANDOFF edits); SPEC/PROMPTS/FIXTURES remain uncommitted.
