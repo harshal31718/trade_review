@@ -42,6 +42,7 @@ class DetectorResult:
     n_total: int                        # trips the detector looked at (multi-leg excluded)
     observed_pnl: float
     baseline_pnl_per_trip: float | None  # mean pnl of unflagged trips
+    flagged_avg_pnl: float | None        # mean pnl of flagged trips
     evidence: pd.DataFrame
     method: str
     notes: tuple[str, ...] = ()
@@ -53,7 +54,7 @@ def _config(overrides: dict | None) -> dict:
 
 def eligible_trips(trips: pd.DataFrame) -> pd.DataFrame:
     if "possible_multi_leg" in trips.columns:
-        trips = trips[~trips["possible_multi_leg"]]
+        trips = trips[~trips["possible_multi_leg"].astype(bool)]
     return trips.sort_values(["entry_ts", "trip_id"], kind="stable").reset_index(drop=True)
 
 
@@ -75,6 +76,7 @@ def _result(name: str, trips: pd.DataFrame, mask, method: str, notes=(),
         n_flagged=int(mask.sum()), n_total=len(trips),
         observed_pnl=float(flagged["pnl"].sum()) if observed_pnl is None else float(observed_pnl),
         baseline_pnl_per_trip=float(rest["pnl"].mean()) if len(rest) else None,
+        flagged_avg_pnl=float(flagged["pnl"].mean()) if len(flagged) else None,
         evidence=_evidence(flagged), method=method, notes=tuple(notes),
     )
 

@@ -89,7 +89,8 @@ def flag_trips(trips: pd.DataFrame, tagged_fills: pd.DataFrame) -> pd.DataFrame:
     """Return ``trips`` with ``possible_multi_leg`` True if any of the trip's fills is tagged."""
     tagged_ids = set(tagged_fills.loc[tagged_fills["possible_multi_leg"], "fill_id"])
     out = trips.copy()
-    out["possible_multi_leg"] = [
-        any(fid in tagged_ids for fid in ids) for ids in out["fill_ids"]
-    ]
+    out["possible_multi_leg"] = pd.Series(
+        [any(fid in tagged_ids for fid in ids) for ids in out["fill_ids"]],
+        index=out.index, dtype=bool,
+    )
     return out
