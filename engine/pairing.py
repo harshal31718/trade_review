@@ -10,7 +10,7 @@ INSTRUMENT_KEY = ("underlying", "expiry", "strike", "option_type")
 
 TRIP_COLUMNS = (
     "trip_id", "underlying", "expiry", "strike", "option_type", "direction",
-    "entry_ts", "exit_ts", "entry_price", "exit_price", "qty", "size",
+    "entry_ts", "exit_ts", "entry_price", "exit_price", "entry_spot", "qty", "size",
     "fees", "pnl", "hold_minutes", "fill_ids",
 )
 OPEN_COLUMNS = (
@@ -43,6 +43,7 @@ class _Trip:
     gross_pnl: float = 0.0
     fees: float = 0.0
     exit_ts: pd.Timestamp | None = None
+    entry_spot: float = float("nan")
     fill_ids: list[int] = field(default_factory=list)
 
     def add_fill_id(self, fill_id: int) -> None:
@@ -62,7 +63,10 @@ def _pair_instrument(rows) -> tuple[list[_Trip], _Trip | None, deque[_Lot]]:
         while remaining > 0:
             if current is None or current.direction == direction:
                 if current is None:
-                    current = _Trip(direction=direction, entry_ts=row.ts)
+                    current = _Trip(
+                        direction=direction, entry_ts=row.ts,
+                        entry_spot=getattr(row, "spot", float("nan")),
+                    )
                 lots.append(_Lot(remaining, row.price))
                 current.open_qty += remaining
                 current.open_notional += remaining * row.price
@@ -96,7 +100,7 @@ def _trip_record(key: tuple, trip: _Trip) -> dict:
         "underlying": underlying, "expiry": expiry, "strike": strike,
         "option_type": option_type, "direction": trip.direction,
         "entry_ts": trip.entry_ts, "exit_ts": trip.exit_ts,
-        "entry_price": entry_price,
+        "entry_price": entry_price, "entry_spot": trip.entry_spot,
         "exit_price": trip.close_notional / trip.close_qty,
         "qty": trip.open_qty, "size": trip.open_qty * entry_price,
         "fees": trip.fees, "pnl": trip.gross_pnl - trip.fees,
