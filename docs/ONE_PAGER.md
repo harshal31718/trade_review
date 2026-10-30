@@ -35,7 +35,7 @@ I chose option 1 with deterministic rules: the same file gives the same answer, 
 
 **What changed:** reviewing the live app, I found an expiry-day card whose flagged trades lost less per trade than the rest. A "habit costing money" that beats your average is an invented finding, so I now report a habit only when its flagged trades do worse than the rest. Recall fell from 70/70 to 63/70. The misses are the cheap-premium habit inside a mixed trader, since rupees per trade penalise small premiums. I kept the rule.
 
-**Limits:** my synthetic traders come from rules I wrote, so scores show the code does what I specified, not that real traders behave this way. [CLARITY RESULT]
+**Limits:** my synthetic traders come from rules I wrote, so scores show the code does what I specified, not that real traders behave this way. I have not yet run the clarity test with non-traders, so that row stays NOT RUN.
 
 ## What I'd do next
 1. Compare return on premium instead of rupees per trade.
