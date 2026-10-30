@@ -11,6 +11,7 @@ from engine.loader import MAX_ROWS, MAX_UPLOAD_BYTES, load_fills  # noqa: E402
 from engine.nudges import TITLES  # noqa: E402
 from engine.review import analyse  # noqa: E402
 from engine.schema import SchemaError  # noqa: E402
+from engine.version import code_version  # noqa: E402
 
 SAMPLE_PATH = ROOT / "data" / "synthetic" / "sample_trades.csv"
 DISCLAIMER = "For demo purposes only. Not investment advice."
@@ -25,7 +26,8 @@ def inr(value: float) -> str:
 
 
 @st.cache_data(show_spinner=False)
-def run(data: bytes, config: tuple):
+def run(data: bytes, config: tuple, version: str):
+    """``version`` is only part of the cache key: new engine code must never reuse an old cached Review."""
     fills = load_fills(data)
     return analyse(fills, dict(config))
 
@@ -142,7 +144,7 @@ def main() -> None:
     data, source_note = choose_data()
     config = threshold_controls()
     try:
-        review = run(data, tuple(sorted(config.items())))
+        review = run(data, tuple(sorted(config.items())), code_version())
     except SchemaError as exc:
         st.error(str(exc))
         st.stop()
