@@ -7,7 +7,7 @@ import pytest
 from engine.detectors import (
     CONFIG, EXPIRY_CHEAP, FEE_DRAG, LOSER_HOLDING, OVERSIZING, REVENGE, DetectorResult,
 )
-from engine.nudges import DESCRIPTIONS, NO_COUNTERFACTUAL, TEMPLATES, render_nudge
+from engine.nudges import DESCRIPTIONS, NO_COUNTERFACTUAL, TEMPLATES, TITLES, render_nudge
 from engine.review import analyse
 from tests.conftest import fill, fills_df
 
@@ -48,10 +48,10 @@ def lint(text):
 
 
 def test_every_detector_has_a_template_and_description():
-    assert set(TEMPLATES) == set(NAMES) == set(DESCRIPTIONS)
+    assert set(TEMPLATES) == set(NAMES) == set(DESCRIPTIONS) == set(TITLES)
 
 
-@pytest.mark.parametrize("text", all_rendered() + list(TEMPLATES.values()) + list(DESCRIPTIONS.values()))
+@pytest.mark.parametrize("text", all_rendered() + list(TEMPLATES.values()) + list(DESCRIPTIONS.values()) + list(TITLES.values()))
 def test_no_banned_tokens_or_unkind_words(text):
     assert lint(text) == []
 

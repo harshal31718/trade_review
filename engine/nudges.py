@@ -17,6 +17,14 @@ DESCRIPTIONS: dict[str, str] = {
     FEE_DRAG: "Charges taking a large share of what your trades moved.",
 }
 
+TITLES: dict[str, str] = {
+    REVENGE: "Quick re-entry after a loss",
+    EXPIRY_CHEAP: "Cheap trades on expiry day",
+    OVERSIZING: "Larger than your usual size",
+    LOSER_HOLDING: "Losses held for more time",
+    FEE_DRAG: "Charges adding up",
+}
+
 COUNTERFACTUAL = " If avoided (estimate): +INR {estimate}, assuming nothing else changes."
 
 TEMPLATES: dict[str, str] = {
