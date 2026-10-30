@@ -1,3 +1,2 @@
-streamlit
-pandas
-pytest
+streamlit==1.66.1
+pandas==3.1.0
