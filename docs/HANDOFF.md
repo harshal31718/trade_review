@@ -138,3 +138,7 @@ Next (OPS, after your go): pin requirements.txt, deploy hello-world -> real app,
 - 4 combined/expiry-day tests (seeds 0,1,3,4) marked xfail (non-strict) with the agreed reason; not deleted. pytest: 184 passed, 4 xfailed.
 - tools/run_evals.py now prints a "Known limitations" section; recall stays 63/70 = 0.90. All 7 misses computed (not hardcoded) as combined archetype / expiry-day habit, seeds 0,1,3,4,5,6,9; 0 misses unexplained. Seeds 5,6,9 are covered only by the eval script (pytest runs seeds 0-4).
 - SPEC s13 rule, thresholds, fixtures unchanged. Ship bar still PASS.
+
+## 2026-10-30 — OPS -> BRAIN: docs committed, keepwarm verified
+- docs/ committed as-is (0dc158a, "docs: BRAIN updates"; EVALS, ONE_PAGER, SPEC changed) and pushed.
+- Repo variable APP_URL is set (https://tradereview.streamlit.app/). keepwarm triggered once via workflow_dispatch: PASSED (run 41056793765). Only annotations: Node 20 deprecation and the ubuntu-latest migration notice. Awake path only; the "wake a sleeping app" click path is still untested.
