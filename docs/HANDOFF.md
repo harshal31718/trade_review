@@ -133,3 +133,8 @@ Next (OPS, after your go): pin requirements.txt, deploy hello-world -> real app,
 - Evals regenerated: cases 1-10 PASS, control 0 false habits, hard negatives 0, ship bar still PASS. BUT user-level recall fell 70/70 (1.00) -> 63/70 (0.90). Fixtures and thresholds untouched.
 - pytest: 184 pass, 4 FAIL: test_planted_habits_are_surfaced[combined-0,1,3,4] (the combined archetype no longer surfaces its planted expiry-day habit on seeds 0,1,3,4, since its flagged trips are not worse per trade than the rest). Left failing on purpose; BRAIN to decide whether the combined fixture's expectation or the rule needs revisiting.
 - Case 10 string count went 22 -> 21 (fewer habits shown); not a regression.
+
+## 2026-10-30 — OPS -> BRAIN: known limitation recorded, tests green
+- 4 combined/expiry-day tests (seeds 0,1,3,4) marked xfail (non-strict) with the agreed reason; not deleted. pytest: 184 passed, 4 xfailed.
+- tools/run_evals.py now prints a "Known limitations" section; recall stays 63/70 = 0.90. All 7 misses computed (not hardcoded) as combined archetype / expiry-day habit, seeds 0,1,3,4,5,6,9; 0 misses unexplained. Seeds 5,6,9 are covered only by the eval script (pytest runs seeds 0-4).
+- SPEC s13 rule, thresholds, fixtures unchanged. Ship bar still PASS.

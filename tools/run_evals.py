@@ -190,17 +190,19 @@ def trade_level() -> pd.DataFrame:
 
 def user_level() -> dict:
     planted_total = planted_hit = control_false = hn_false = 0
+    misses: list[tuple[str, int, str]] = []
     for seed in SEEDS:
         for name, user in make_users(seed).items():
             got = surfaced(user)
             planted_total += len(user.planted)
             planted_hit += len(got & user.planted)
+            misses += [(name, seed, h) for h in sorted(user.planted - got)]
             if name == "clean_control":
                 control_false += len(got)
             elif name in HARD_NEGATIVES:
                 hn_false += len(got)
     return {"recall": planted_hit / planted_total, "planted": planted_total, "hit": planted_hit,
-            "control_false": control_false, "hn_false": hn_false}
+            "control_false": control_false, "hn_false": hn_false, "misses": misses}
 
 
 SWEEPS = {"W": [5, 10, 15, 30, 45], "R": [0.5, 1.0, 1.5, 2.0], "P": [10, 20, 30, 50, 80], "K": [1.5, 2.0, 3.0, 4.0]}
@@ -242,6 +244,14 @@ def main() -> int:
     out(f"- User-level recall (planted habit surfaced): {ul['hit']}/{ul['planted']} = {ul['recall']:.2f}")
     out(f"- Clean control false habits (all seeds): {ul['control_false']}")
     out(f"- Hard-negative false habits (all seeds): {ul['hn_false']}\n")
+    out("## Known limitations")
+    known = [m for m in ul["misses"] if m[0] == "combined" and m[2] == EXPIRY_CHEAP]
+    out(f"- Rupees-per-trade comparison (SPEC s13) under-measures cheap-premium habits in a mixed trader; "
+        f"fix = compare return on premium. Attributed misses: {len(known)} of {len(ul['misses'])} "
+        f"(combined archetype, expiry-day habit, seeds {sorted(m[1] for m in known)}).")
+    other = [m for m in ul["misses"] if m not in known]
+    out(f"- Misses NOT explained by this limitation: {len(other)}" + (f" {other}" if other else ""))
+    out()
     out("Trade-level (planted trades vs flagged trips, all users):\n")
     out(trade_level().to_string(index=False))
     out("\n## Threshold sweep (one parameter at a time, others at default)")

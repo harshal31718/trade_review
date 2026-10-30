@@ -24,6 +24,10 @@ Caveat: synthetic data tests implementation correctness, not real-world validity
 - Clean control false habits (all seeds): 0
 - Hard-negative false habits (all seeds): 0
 
+## Known limitations
+- Rupees-per-trade comparison (SPEC s13) under-measures cheap-premium habits in a mixed trader; fix = compare return on premium. Attributed misses: 7 of 7 (combined archetype, expiry-day habit, seeds [0, 1, 3, 4, 5, 6, 9]).
+- Misses NOT explained by this limitation: 0
+
 Trade-level (planted trades vs flagged trips, all users):
 
                 detector  TP  FP  FN precision recall
