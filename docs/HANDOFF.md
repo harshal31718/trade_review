@@ -102,3 +102,15 @@ SPEC ambiguities for BRAIN:
 3. s8 asks for an "estimate INR" per habit but s7 D5 says no counterfactual. I show none for D5 and D4.
 4. s7 D3 "fewer than 10 prior trips: whole-period median" — I include the trip itself in that median.
 5. Not built yet: the app, synthetic generator, eval script, keep-warm job.
+
+## 2026-10-30 — OPS: synthetic data, app, evals built; localhost works
+Passed: 185 pytest cases, all green. App verified on http://localhost:8501 (health 200, page text checked in Chrome; screenshot timed out, so no visual layout check yet). Not deployed. Keep-warm job not started (waits for the app URL).
+- engine/synthetic.py: seeded generator (9 archetypes per seed: revenge, expiry gambler, oversizer, loser holder, combined (3 habits), clean control, 3 hard negatives: late re-entry, consistently large size, profitable cheap expiry trades). `python -m engine.synthetic` writes data/synthetic/sample_trades.csv (the combined trader, 54 trips, net -INR 47,020 gross; shows 3 habits).
+- engine/loader.py: CSV bytes -> canonical fills; caps 2 MB and 5,000 rows; clean SchemaError messages. .streamlit/config.toml sets maxUploadSize = 2.
+- app/main.py: one screen; sample preloaded; "Load sample" button; uploader; threshold sliders (W, R, P, K, H) in an expander; header (period, trades, net P&L with gross/net label, win rate); up to 3 habit cards (rupees, n of N, avg flagged vs other, nudge, evidence table); warnings expander; disclaimer at top and bottom. No Streamlit imports in engine/.
+- tools/run_evals.py writes data/synthetic/eval_results.md in the guide format (# | Type | Input | Expected | Actual | Pass/Fail | Fix), 10 cases + a Clarity row marked NOT RUN. Ship bar is in the script header. 4 hand-calculated rupee cases (F2 +1,500; F4 x3 -9,000; F8 -750; F6 -900).
+Results (seeds 0-9, 90 synthetic users): all 10 cases PASS; control false habits 0; user-level recall 70/70; hard-negative false habits 0. Trade-level precision/recall: revenge 1.00/1.00, oversizing 1.00/1.00, loser-holding 1.00/1.00, expiry-cheap 0.67/1.00 (the 80 "false positives" are the profitable cheap-expiry trades of the hard-negative user: flagged by the detector but, correctly, never reported because their pnl is positive).
+Sweep highlights: W=5 surfaces revenge on only 2/10 seeds, W=45 gives 4 false habits; R>=1.5 surfaces 0/10; P=10 gives 5/10; K=1.5 gives 1 false habit, K=4 gives 3/10. Defaults sit in the stable middle.
+Honest caveats: (1) I wrote the generator knowing the detector rules, so the perfect scores are partly circular; they show the implementation does what SPEC says, not that the rules match real behaviour. (2) Clarity test with non-traders is not done and needs a human. (3) Combined sample shows 3 habits and the oversizing one dominates (-INR 26.6k of -47k).
+Needs from BRAIN: confirm D4 FEE_RATIO = 0.2 (still an assumption); EVALS.md/ONE_PAGER.md can now be written from data/synthetic/eval_results.md.
+Next (OPS, after your go): pin requirements.txt, deploy hello-world -> real app, then keep-warm workflow.

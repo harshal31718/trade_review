@@ -127,6 +127,11 @@ def build_review(trips: pd.DataFrame, results: dict[str, DetectorResult], *,
 
 def analyse(fills: pd.DataFrame, config: dict | None = None) -> Review:
     """Full pipeline from validated canonical fills to a Review."""
+    return analyse_detailed(fills, config)[0]
+
+
+def analyse_detailed(fills: pd.DataFrame, config: dict | None = None):
+    """Like ``analyse`` but also returns (review, trips, detector results) for evals and debugging."""
     has_fees = "fees" in fills.columns
     tagged = tag_multileg(fills)
     paired = pair_trips(tagged.fills)
@@ -136,4 +141,5 @@ def analyse(fills: pd.DataFrame, config: dict | None = None) -> Review:
     if n_excluded:
         warnings.append(f"{n_excluded} trip(s) excluded from habit detection as possible multi-leg.")
     results = run_detectors(trips, config, has_fees=has_fees)
-    return build_review(trips, results, has_fees=has_fees, warnings=warnings, config=config)
+    review = build_review(trips, results, has_fees=has_fees, warnings=warnings, config=config)
+    return review, trips, results
