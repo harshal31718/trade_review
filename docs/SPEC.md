@@ -103,3 +103,9 @@ Source: Nubra Product Manager Assignment Candidate Reference Guide (Notion). Gra
    Solution-space options to compare: (a) uploaded CSV report [built], (b) in-platform automatic weekly push using Nubra's own OMS data [next version],
    (c) LLM-written narrative review [rejected: not reproducible, cannot be evaluated against ground truth].
 8. Why-Nubra facts from the guide: institutional-grade tools for retail, own OMS/RMS, 25,000+ retail demat accounts. SEBI loss statistic must be re-checked on sebi.gov.in and cited with source before use.
+
+## 13. v0.3 amendment (2026-10-30, found by BRAIN reviewing the live app)
+Problem: the live sample reported "Cheap trades on expiry day" with flagged avg -INR 701/trade vs -INR 900 on other trades. The flagged trips were BETTER than the rest, so the card contradicts "habit costing money".
+Rule change (applies to D1, D2, D3, D5): report a habit only if n_flagged >= 3 AND observed_pnl < 0 AND flagged_avg_pnl < unflagged_avg_pnl (flagged trips do worse per trade than the rest). If there are no unflagged trips, skip the third condition.
+UI: one caption under the habit cards: "Habits can overlap, so these rupee figures should not be added together."
+Open decisions answered: D4 FEE_RATIO = 0.2 accepted (dormant in sample, no fees). D1 most-recent-loser accepted. D5/D4 no estimate accepted. D3 self-inclusion in median accepted.
