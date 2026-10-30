@@ -24,6 +24,30 @@ def test_needs_three_flagged_and_negative_pnl():
     assert is_reportable(result("a", 3, -1), CONFIG)
 
 
+def test_flagged_trips_beating_the_rest_are_not_reported():
+    # flagged avg -700/trip is better than the rest at -900/trip: losing overall, but not a habit
+    better = DetectorResult(
+        name="expiry_day_cheap_premium", status="ok", flagged_trip_ids=(0, 1, 2), n_flagged=3,
+        n_total=20, observed_pnl=-2100.0, baseline_pnl_per_trip=-900.0, flagged_avg_pnl=-700.0,
+        evidence=pd.DataFrame(columns=["trip_id", "entry_ts", "instrument", "size", "pnl"]), method="x",
+    )
+    assert not is_reportable(better, CONFIG)
+
+
+def test_flagged_trips_worse_than_the_rest_are_reported():
+    worse = result("revenge_reentry", 3, -2100.0)      # avg -700 vs baseline +50
+    assert is_reportable(worse, CONFIG)
+
+
+def test_no_unflagged_trips_skips_the_comparison():
+    alone = DetectorResult(
+        name="loser_holding", status="ok", flagged_trip_ids=(0, 1, 2), n_flagged=3,
+        n_total=3, observed_pnl=-300.0, baseline_pnl_per_trip=None, flagged_avg_pnl=-100.0,
+        evidence=pd.DataFrame(columns=["trip_id", "entry_ts", "instrument", "size", "pnl"]), method="x",
+    )
+    assert is_reportable(alone, CONFIG)
+
+
 def test_ranked_by_abs_pnl_desc_and_capped_at_three():
     rs = {n: result(n, 3, p) for n, p in [("a", -100), ("b", -900), ("c", -500), ("d", -700)]}
     ranked = rank_results(rs, CONFIG)

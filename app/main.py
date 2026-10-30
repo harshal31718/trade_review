@@ -101,6 +101,7 @@ def main() -> None:
         for col, habit in zip(st.columns(len(review.habits)), review.habits):
             with col:
                 show_habit(habit)
+        st.caption("Habits can overlap, so these rupee figures should not be added together.")
     else:
         st.success(review.no_habit_message)
     if review.warnings:

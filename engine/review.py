@@ -57,11 +57,21 @@ class Review:
         return bool(self.habits)
 
 
+def _does_worse_than_rest(result: DetectorResult) -> bool:
+    """SPEC s13: flagged trips must lose more per trade than the rest; skipped when there is no rest."""
+    if result.name == FEE_DRAG:
+        return True
+    if result.flagged_avg_pnl is None or result.baseline_pnl_per_trip is None:
+        return True
+    return result.flagged_avg_pnl < result.baseline_pnl_per_trip
+
+
 def is_reportable(result: DetectorResult, config: dict) -> bool:
     return (
         result.status == "ok"
         and result.n_flagged >= config["MIN_FLAGGED"]
         and result.observed_pnl < 0
+        and _does_worse_than_rest(result)
     )
 
 

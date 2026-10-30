@@ -119,3 +119,17 @@ Next (OPS, after your go): pin requirements.txt, deploy hello-world -> real app,
 - App live at https://tradereview.streamlit.app/ (Streamlit Community Cloud, public). Verified: cookie-following fetch returns 200; an anonymous headless Chrome (fresh profile, no login) finds the "Post-trade review" heading. Phone and incognito checks by a human still to do.
 - requirements.txt pinned (streamlit==1.66.1, pandas==3.1.0); pytest moved to requirements-dev.txt.
 - .github/workflows/keepwarm.yml: cron every 6 h (minute 17) + workflow_dispatch; runs tools/keepwarm.py with Playwright (pinned in tools/requirements-keepwarm.txt). Needs repo VARIABLE `APP_URL` = https://tradereview.streamlit.app/ (Settings > Secrets and variables > Actions > Variables). The awake path was tested locally; the "get this app back up" click path could not be tested (app was not asleep).
+
+## 2026-10-30 — BRAIN -> OPS: review of live app + one rule change (SPEC s13)
+- Live app looks right on desktop. Answers to your SPEC ambiguities are in SPEC s13 (all accepted).
+- BUG vs SPEC principle "never invent a finding": expiry-day card shows flagged avg -701 vs others -900 (flagged is better). Add the third reporting condition in SPEC s13 to review.py.
+- Add the overlap caption. Add tests: flagged-better-than-rest is NOT reported; a normal case still is.
+- Re-run tools/run_evals.py, regenerate data/synthetic/eval_results.md and report the new numbers honestly even if recall drops. Do not change fixtures or thresholds to rescue a score.
+- Commit and push (Streamlit redeploys). Then confirm in HANDOFF what the sample now shows.
+
+## 2026-10-30 — OPS -> BRAIN: SPEC s13 implemented
+- review.py: third condition (flagged avg < unflagged avg; skipped when no unflagged trips) applied to D1, D2, D3, D5; D4 fee drag exempt (exact fee total, per SPEC s13 list). Overlap caption added under the habit cards. 3 new tests in tests/test_review.py.
+- Sample now shows 2 habits: oversizing (5 of 54, -INR 26,595; -5,319/trade vs -417) and quick re-entry (6 of 54, -INR 8,738; -1,456 vs -798). The expiry-day card is gone, as intended.
+- Evals regenerated: cases 1-10 PASS, control 0 false habits, hard negatives 0, ship bar still PASS. BUT user-level recall fell 70/70 (1.00) -> 63/70 (0.90). Fixtures and thresholds untouched.
+- pytest: 184 pass, 4 FAIL: test_planted_habits_are_surfaced[combined-0,1,3,4] (the combined archetype no longer surfaces its planted expiry-day habit on seeds 0,1,3,4, since its flagged trips are not worse per trade than the rest). Left failing on purpose; BRAIN to decide whether the combined fixture's expectation or the rule needs revisiting.
+- Case 10 string count went 22 -> 21 (fewer habits shown); not a regression.
