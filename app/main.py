@@ -85,6 +85,57 @@ def show_habit(habit) -> None:
         )
 
 
+def _pct(value) -> str:
+    return "n/a" if value is None else f"{value:.1%}"
+
+
+def _ratio(value) -> str:
+    return "n/a (no losing trades)" if value is None else f"{value:.2f}"
+
+
+def show_stats(review) -> None:
+    stats = review.stats
+    if stats is None:
+        return
+    with st.expander("Trade statistics"):
+        st.caption("Descriptive only, from this file. Not a forecast or advice. "
+                   f"P&L is {review.pnl_label}.")
+        if stats.n_multi_leg_excluded:
+            st.caption(f"({stats.n_multi_leg_excluded} multi-leg trades excluded)")
+        st.markdown("**Performance**")
+        a = st.columns(4)
+        a[0].metric("Net P&L", inr(stats.net_pnl), help="Sum of profit and loss over all completed trades.")
+        a[1].metric("Win rate", _pct(stats.win_rate), help="Winning trades divided by all completed trades.")
+        a[2].metric("Average win", inr(stats.avg_win), help="Average profit of the winning trades.")
+        a[3].metric("Average loss", "n/a" if stats.avg_loss is None else inr(stats.avg_loss),
+                    help="Average size of the losing trades, as a positive amount.")
+        b = st.columns(3)
+        b[0].metric("Largest win", inr(stats.largest_win), help="The single best trade.")
+        b[1].metric("Largest loss", inr(stats.largest_loss), help="The single worst trade, shown as a positive amount.")
+        b[2].metric("Expectancy per trade", inr(stats.expectancy),
+                    help="Average profit or loss per trade: win rate x average win minus loss rate x average loss.")
+        st.markdown("**Risk and ratios**")
+        c = st.columns(4)
+        c[0].metric("Realised reward:risk", _ratio(stats.payoff_ratio),
+                    help="Average win divided by average loss. Planned reward:risk is not in the file, so this is what was realised.")
+        if stats.payoff_ratio_after_charges is not None:
+            c[0].caption(f"after charges: {_ratio(stats.payoff_ratio_after_charges)}")
+        c[1].metric("Profit factor", _ratio(stats.profit_factor),
+                    help="Total profit of winning trades divided by total loss of losing trades.")
+        c[2].metric("Breakeven win rate", _pct(stats.breakeven_win_rate),
+                    help="The win rate needed to break even at your average win and loss: 1 / (1 + reward:risk), before charges.")
+        c[3].metric("Max drawdown", inr(stats.max_drawdown),
+                    help="Largest fall from a peak of cumulative profit to the next low, in rupees.")
+        d = st.columns(3)
+        d[0].metric("Longest losing streak", stats.longest_losing_streak, help="Most losing trades in a row.")
+        d[1].metric("Longest winning streak", stats.longest_winning_streak, help="Most winning trades in a row.")
+        d[2].metric("Average trade size", inr(stats.avg_trade_size),
+                    help="Average premium paid per trade: quantity x entry price.")
+        if stats.breakeven_win_rate is not None:
+            st.write(f"At your average win and loss you break even at a {stats.breakeven_win_rate:.0%} win rate; "
+                     f"yours is {stats.win_rate:.0%}.")
+
+
 def main() -> None:
     st.title("Post-trade review")
     st.caption(f"{DISCLAIMER} A quick look at which repeat habits cost the most in your month of trades.")
@@ -104,6 +155,7 @@ def main() -> None:
         st.caption("Habits can overlap, so these rupee figures should not be added together.")
     else:
         st.success(review.no_habit_message)
+    show_stats(review)
     if review.warnings:
         with st.expander(f"Notes and warnings ({len(review.warnings)})"):
             for warning in review.warnings:

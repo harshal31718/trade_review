@@ -5,7 +5,7 @@ detectors, then reports the costliest habits (at most 3, each with a rupee figur
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 import pandas as pd
 
@@ -15,6 +15,7 @@ from engine.detectors import (
 from engine.multileg import flag_trips, tag_multileg
 from engine.nudges import DESCRIPTIONS, render_nudge
 from engine.pairing import pair_trips
+from engine.stats import TradeStats, compute_stats
 
 MAX_HABITS = 3
 MAX_EVIDENCE_ROWS = 5
@@ -51,6 +52,7 @@ class Review:
     no_habit_message: str | None
     warnings: tuple[str, ...]
     config: dict = field(default_factory=dict)
+    stats: TradeStats | None = None
 
     @property
     def has_habits(self) -> bool:
@@ -152,4 +154,5 @@ def analyse_detailed(fills: pd.DataFrame, config: dict | None = None):
         warnings.append(f"{n_excluded} trip(s) excluded from habit detection as possible multi-leg.")
     results = run_detectors(trips, config, has_fees=has_fees)
     review = build_review(trips, results, has_fees=has_fees, warnings=warnings, config=config)
+    review = replace(review, stats=compute_stats(trips, has_fees=has_fees))
     return review, trips, results

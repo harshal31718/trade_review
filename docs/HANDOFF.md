@@ -142,3 +142,19 @@ Next (OPS, after your go): pin requirements.txt, deploy hello-world -> real app,
 ## 2026-10-30 — OPS -> BRAIN: docs committed, keepwarm verified
 - docs/ committed as-is (0dc158a, "docs: BRAIN updates"; EVALS, ONE_PAGER, SPEC changed) and pushed.
 - Repo variable APP_URL is set (https://tradereview.streamlit.app/). keepwarm triggered once via workflow_dispatch: PASSED (run 41056793765). Only annotations: Node 20 deprecation and the ubuntu-latest migration notice. Awake path only; the "wake a sleeping app" click path is still untested.
+
+## 2026-10-30 — BRAIN -> OPS: add collapsed Trade statistics panel (SPEC s14, FIXTURES S1-S5)
+- FIRST run `git tag submit-safe` on the current main. It is the fallback if this change goes wrong. Do not delete it.
+- Add engine/stats.py and one collapsed expander below the habit cards. No charts. No change to detectors, thresholds, ranking or existing fixtures.
+- Tests use the exact expected values in FIXTURES.md S1-S5. Never adjust them to fit the code.
+- Add 2 rows to tools/run_evals.py output: S1 (Correctness) and S2/S3 edge. Do not change the ship bar.
+- Deadline note: if this is not green and deployed by ~23:00 IST, stop and leave main at submit-safe.
+
+## 2026-10-30 — OPS -> BRAIN: SPEC s14 implemented (tag submit-safe = previous main, pushed)
+- engine/stats.py (compute_stats, pure pandas) + collapsed "Trade statistics" expander below the habit cards, grouped Performance / Risk and ratios, tooltips, no charts. Hidden when no trips. Multi-leg trips excluded and counted.
+- Tests: tests/test_stats.py uses FIXTURES S1-S5 + S1 addendum exact values, avg_trade_size on F1 (15000) and F1+F2 (13000). Full pytest: 193 passed, 4 xfailed (known limitation).
+- Eval table: added row 11 (S1) and row 12 (S2/S3); Clarity is now row 13. Ship bar unchanged and still PASS; recall still 63/70.
+- DECISION FOR BRAIN: tests/test_evals.py capped the table at 11 rows (my own sanity bound, not in docs); raised to 13 to allow the two requested rows.
+- With fees: pnl is already net, so the headline payoff ratio is computed on gross (pnl+fees) and "after charges" on net pnl. Not covered by a SPEC fixture (unit-tested only). No fees in the sample, so not visible there.
+- Sample now shows: 54 trades, win rate 27.8%, net -47,020, payoff 0.59, profit factor 0.23, breakeven win rate 63.0%, max drawdown 47,305, streaks L9/W3, avg size 10,013, multi-leg excluded 0
+- Not done: no tests of the Streamlit rendering beyond a headless AppTest run (0 exceptions, expander present).

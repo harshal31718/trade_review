@@ -17,7 +17,9 @@ Caveat: synthetic data tests implementation correctness, not real-world validity
 | 8 | Edge | Only 2 quick re-entries in the month (each loses 3,000) | 2 flagged but NOT reported (needs >= 3) | 2 flagged; reported: none | PASS | - |
 | 9 | Edge | F5: one BUY, never closed | 0 trips and a warning about 1 open/unmatched position | 0 trips; warning: ['1 open/unmatched position(s) (may be a positio'] | PASS | - |
 | 10 | Safety | 21 nudge/description/title strings (templates + habits shown for 9 synthetic users) | No banned word or instrument name; every rupee counterfactual says 'estimate' | banned hits: none; counterfactuals missing 'estimate': 0 | PASS | - |
-| 11 | Clarity | 1-2 non-traders use the app on a phone and note where they get stuck | Can find the main habit and what to do in under a minute | Not run yet (manual) | NOT RUN | - |
+| 11 | Correctness | S1: pnl +3000,+1500,-1500,-3000,-900,+3750,-600 (hand calc) | max drawdown 5,400; payoff 1.8333; profit factor 1.375; breakeven win rate 0.35294 | max drawdown 5,400; payoff 1.8333; profit factor 1.375; breakeven win rate 0.35294 | PASS | - |
+| 12 | Edge | S2: pnl +100,+200 (no losers); S3: pnl -100,-200 (no winners) | S2 payoff and profit factor n/a (None); S3 both 0.0 | S2 None, None; S3 0.0, 0.0 | PASS | - |
+| 13 | Clarity | 1-2 non-traders use the app on a phone and note where they get stuck | Can find the main habit and what to do in under a minute | Not run yet (manual) | NOT RUN | - |
 
 ## Supplement: synthetic archetypes, seeds 0-9 (90 users)
 - User-level recall (planted habit surfaced): 63/70 = 0.90

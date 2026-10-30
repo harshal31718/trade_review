@@ -21,6 +21,7 @@ from engine.detectors import EXPIRY_CHEAP, LOSER_HOLDING, OVERSIZING, REVENGE  #
 from engine.loader import load_fills  # noqa: E402
 from engine.nudges import DESCRIPTIONS, TEMPLATES, TITLES  # noqa: E402
 from engine.review import NO_HABIT_MESSAGE, analyse, analyse_detailed  # noqa: E402
+from engine.stats import compute_stats  # noqa: E402
 from engine.schema import SchemaError, validate_trades  # noqa: E402
 from engine.synthetic import make_users  # noqa: E402
 
@@ -147,8 +148,32 @@ def case_safety():
             f"banned hits: {hits or 'none'}; counterfactuals missing 'estimate': {len(bad_cf)}", not hits and not bad_cf)
 
 
+def _stat_trips(*pnls):
+    return pd.DataFrame({"pnl": [float(p) for p in pnls], "fees": 0.0, "size": 1000.0,
+                         "exit_ts": pd.date_range("2026-10-01", periods=len(pnls), freq="h"),
+                         "possible_multi_leg": False})
+
+
+def case_stats_s1():
+    s = compute_stats(_stat_trips(3000, 1500, -1500, -3000, -900, 3750, -600))
+    got = (s.max_drawdown, round(s.payoff_ratio, 4), round(s.profit_factor, 3), round(s.breakeven_win_rate, 5))
+    return ("Correctness", "S1: pnl +3000,+1500,-1500,-3000,-900,+3750,-600 (hand calc)",
+            "max drawdown 5,400; payoff 1.8333; profit factor 1.375; breakeven win rate 0.35294",
+            f"max drawdown {got[0]:,.0f}; payoff {got[1]}; profit factor {got[2]}; breakeven win rate {got[3]}",
+            got == (5400, 1.8333, 1.375, 0.35294))
+
+
+def case_stats_no_losers_no_winners():
+    a, b = compute_stats(_stat_trips(100, 200)), compute_stats(_stat_trips(-100, -200))
+    got = (a.payoff_ratio, a.profit_factor, b.payoff_ratio, b.profit_factor)
+    return ("Edge", "S2: pnl +100,+200 (no losers); S3: pnl -100,-200 (no winners)",
+            "S2 payoff and profit factor n/a (None); S3 both 0.0",
+            f"S2 {got[0]}, {got[1]}; S3 {got[2]}, {got[3]}", got == (None, None, 0.0, 0.0))
+
+
 CASES = [case_fifo, case_revenge_rupees, case_loser_holding, case_expiry_cheap, case_clean,
-         case_empty, case_missing_column, case_small_sample, case_open_position, case_safety]
+         case_empty, case_missing_column, case_small_sample, case_open_position, case_safety,
+         case_stats_s1, case_stats_no_losers_no_winners]
 
 
 def table() -> tuple[str, bool]:
