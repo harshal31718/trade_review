@@ -114,3 +114,8 @@ Sweep highlights: W=5 surfaces revenge on only 2/10 seeds, W=45 gives 4 false ha
 Honest caveats: (1) I wrote the generator knowing the detector rules, so the perfect scores are partly circular; they show the implementation does what SPEC says, not that the rules match real behaviour. (2) Clarity test with non-traders is not done and needs a human. (3) Combined sample shows 3 habits and the oversizing one dominates (-INR 26.6k of -47k).
 Needs from BRAIN: confirm D4 FEE_RATIO = 0.2 (still an assumption); EVALS.md/ONE_PAGER.md can now be written from data/synthetic/eval_results.md.
 Next (OPS, after your go): pin requirements.txt, deploy hello-world -> real app, then keep-warm workflow.
+
+## 2026-10-30 — OPS: deployed, public, keep-warm added
+- App live at https://tradereview.streamlit.app/ (Streamlit Community Cloud, public). Verified: cookie-following fetch returns 200; an anonymous headless Chrome (fresh profile, no login) finds the "Post-trade review" heading. Phone and incognito checks by a human still to do.
+- requirements.txt pinned (streamlit==1.66.1, pandas==3.1.0); pytest moved to requirements-dev.txt.
+- .github/workflows/keepwarm.yml: cron every 6 h (minute 17) + workflow_dispatch; runs tools/keepwarm.py with Playwright (pinned in tools/requirements-keepwarm.txt). Needs repo VARIABLE `APP_URL` = https://tradereview.streamlit.app/ (Settings > Secrets and variables > Actions > Variables). The awake path was tested locally; the "get this app back up" click path could not be tested (app was not asleep).
