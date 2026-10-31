@@ -109,3 +109,23 @@ Problem: the live sample reported "Cheap trades on expiry day" with flagged avg 
 Rule change (applies to D1, D2, D3, D5): report a habit only if n_flagged >= 3 AND observed_pnl < 0 AND flagged_avg_pnl < unflagged_avg_pnl (flagged trips do worse per trade than the rest). If there are no unflagged trips, skip the third condition.
 UI: one caption under the habit cards: "Habits can overlap, so these rupee figures should not be added together."
 Open decisions answered: D4 FEE_RATIO = 0.2 accepted (dormant in sample, no fees). D1 most-recent-loser accepted. D5/D4 no estimate accepted. D3 self-inclusion in median accepted.
+
+## 14. v0.4 addition: collapsed "Trade statistics" panel (requested by Harshal 2026-10-30)
+Purpose: show trading-literacy numbers without breaking the one-screen / top-3-habits rule. Nubra's guide lists "full analytics dashboards" as out of scope and "15 charts instead of 3 insights" as a trap, so:
+- It lives in ONE st.expander("Trade statistics") placed BELOW the habit cards, collapsed by default. No charts. 8-10 numbers only.
+- Every metric has a help tooltip with its formula in plain words. Panel caption: "Descriptive only, from this file. Not a forecast or advice." Gross/net label follows the header.
+- Computed in engine/stats.py (pure Python, no Streamlit). Set = completed trips EXCLUDING possible_multi_leg trips; panel shows "(N multi-leg trades excluded)" when N > 0. Order = exit_ts ascending.
+Definitions (W = winning trips pnl > 0, L = losing trips pnl < 0; pnl = 0 trips count as neither wins nor losses but stay in the trade count):
+  trades, win_rate = |W| / trades
+  net_pnl = sum pnl
+  avg_win = mean pnl of W ; avg_loss = mean |pnl| of L
+  payoff_ratio ("realised reward:risk") = avg_win / avg_loss
+  profit_factor = sum pnl of W / sum |pnl| of L
+  expectancy_per_trade = mean pnl of all trips = win_rate*avg_win - loss_rate*avg_loss
+  breakeven_win_rate = 1 / (1 + payoff_ratio)   [the win rate needed at this payoff ratio to break even, before charges]
+  max_drawdown = largest peak-to-trough fall of cumulative pnl (starting equity 0, peak includes the starting 0), in INR
+  longest_losing_streak, longest_winning_streak (consecutive trips)
+"Effective RR": the file has no stop-loss or target, so PLANNED reward:risk cannot be known. The app shows the REALISED payoff ratio and labels it exactly that. If a fees column is present, also show the payoff ratio after charges and label it "after charges".
+Edge cases: no losers -> payoff_ratio and profit_factor show "n/a (no losing trades)", breakeven_win_rate n/a. No winners -> avg_win 0, payoff_ratio 0.0, profit_factor 0.0. No trips -> panel hidden.
+Language: the panel states numbers and the breakeven comparison ("At your average win and loss you break even at a 35% win rate; yours is 43%"). It never says good/bad, never says what to trade.
+Addendum to s14 (same day): also show largest_win (max pnl) and largest_loss (min pnl, shown as a positive loss figure) and avg_trade_size (mean premium notional qty*entry_price). Panel is grouped in two rows: "Performance" (net, win rate, avg win, avg loss, largest win, largest loss, expectancy) and "Risk and ratios" (payoff ratio, profit factor, breakeven win rate, max drawdown, streaks, avg trade size). Still one collapsed expander, no charts.

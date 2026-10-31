@@ -34,3 +34,14 @@ F9 multi-leg tag: BUY 75@100 NIFTY 24500 CE 10:00:05 and SELL 75@40 NIFTY 24800 
    -> both fills tagged possible_multi_leg (same underlying+expiry, within 60 s, different strikes). Excluded from detectors. Warning count = 1 group.
 
 F10 empty/invalid input: empty file -> clear error message, no crash. Missing required column -> error naming the column.
+
+S1 statistics (completed trips in exit order, pnl in INR): +3000, +1500, -1500, -3000, -900, +3750, -600
+   -> trades 7; wins 3; win_rate 3/7 = 42.857%; net_pnl 2250; gross profit 8250; gross loss 6000;
+      avg_win 2750; avg_loss 1500; payoff_ratio 2750/1500 = 1.8333; profit_factor 8250/6000 = 1.375;
+      expectancy 2250/7 = 321.43; breakeven_win_rate 1/(1+1.8333) = 35.294%;
+      cumulative: 3000, 4500, 3000, 0, -900, 2850, 2250 -> max_drawdown 5400 (peak 4500 to trough -900);
+      longest_losing_streak 3 (-1500, -3000, -900); longest_winning_streak 2.
+S2 no losers: +100, +200 -> win_rate 100%, avg_loss n/a, payoff_ratio n/a, profit_factor n/a, expectancy 150, max_drawdown 0.
+S3 no winners: -100, -200 -> win_rate 0%, avg_win 0, payoff_ratio 0.0, profit_factor 0.0, expectancy -150, max_drawdown 300, longest_losing_streak 2.
+S4 a trip with pnl exactly 0 counts in trades but in neither wins nor losses. S5 empty trips -> no panel, no crash.
+S1 addendum: largest_win 3750; largest_loss 3000. (avg_trade_size has no fixture: test it on F1 alone -> 15000, and on F1+F2 -> (15000+11000)/2 = 13000.)

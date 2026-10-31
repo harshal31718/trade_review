@@ -12,6 +12,8 @@ I worked with two Claude sessions. BRAIN wrote the spec, hand-calculated test fi
 | P-004 | See below | **Failed my own standard first:** the live app reported an expiry-day habit whose trades lost less per trade than the rest. After the rule change, recall fell from 70/70 to 63/70 and 4 tests failed. | Kept the rule. Did not tune thresholds to recover the score. See P-005. |
 | P-005 | See below | The 4 failing tests marked as known limitations with a reason; eval script now prints a Known limitations section; 184 passed, 4 xfailed. | Listed "compare return on premium" as the next fix in the one-pager. |
 | P-006 | See below | Docs committed; keep-warm workflow ran once and passed. | Not tested: the wake-a-sleeping-app path. |
+| P-007 | See below | Statistics panel built (193 tests passed). **The live app then crashed** with an AttributeError and still showed the old three-habit view. | Loaded the live page myself, diagnosed a stale cache (P-008). |
+| P-008 | See below | **Did not fix it.** OPS added a version key to the cache and 196 tests passed, but the live page still crashed. My diagnosis was incomplete: the server process had never restarted and held old code in memory. | Rebooted the app by hand. Live page then showed two habit cards, the statistics panel, no error, and numbers matching my separate recompute. |
 
 ## P-001
 ~~~
@@ -70,4 +72,18 @@ Keep the SPEC s13 rule and all thresholds and fixtures unchanged.
 ## P-006
 ~~~
 Commit docs/ exactly as it is now (ONE_PAGER, SPEC, EVALS, FIXTURES, PROMPTS, HANDOFF) with message "docs: BRAIN updates" and push. Do not edit them. If APP_URL is set as a repo variable, trigger the keepwarm workflow once with workflow_dispatch and report whether it passed. Append the result to docs/HANDOFF.md.
+~~~
+
+## P-007
+~~~
+Read docs/HANDOFF.md (latest BRAIN entry), docs/SPEC.md section 14 (including the addendum) and docs/FIXTURES.md S1-S5 and the S1 addendum. Do NOT edit docs/ except appending to docs/HANDOFF.md.
+First run: git tag submit-safe (on current main) and push the tag.
+Then build engine/stats.py and the collapsed "Trade statistics" expander exactly per SPEC s14. Tests use the exact FIXTURES expected values; never change them. Add the S1 and S2/S3 rows to the eval table without changing the ship bar. Full pytest green, commit, push, confirm deploy, append to HANDOFF.
+Hard stop: if not green and deployed by 23:00 IST, leave main at submit-safe and report.
+~~~
+
+## P-008
+~~~
+Read docs/HANDOFF.md (latest BRAIN entry: LIVE APP BROKEN, stale cache). Do NOT edit docs/ except appending to docs/HANDOFF.md.
+Fix the stale-cache bug exactly as described: add a code-version component to the cache key in app/main.py so a new deploy can never serve an old cached Review. Do not disable the cache. Add a test. Report the sample's longest losing streak and longest winning streak. Commit, push, then verify with a fresh headless load that the page shows 2 habit cards, no expiry-day card, the Trade statistics expander, and zero exceptions. Append results to HANDOFF.
 ~~~
